@@ -1,0 +1,11 @@
+{:deps
+ {thheller/shadow-cljs   {:mvn/version "2.26.2"}
+  no.cjohansen/replicant {:mvn/version "2025.03.27"}
+  funcool/promesa {:mvn/version "11.0.678"}
+  metosin/malli {:mvn/version "0.18.0"}}
+ :paths
+ ["src/dev" "src/main" "src/test" "resources"]
+ :aliases
+ {:dev
+  {:extra-paths ["dev"]
+   :extra-deps {}}}}

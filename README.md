@@ -1,127 +1,161 @@
-# shadow-cljs - browser quickstart
+<p align="center">
+  <img src="./resources/formless-vision.png" alt="Formless Vision screenshot" width="300">
+</p>
 
-This is a minimum template you can use as the basis for CLJS projects intended to run in the browser.
+<h1 align="center">Nirvikalpa</h1>
 
-You must have [`npm v5+`](https://www.npmjs.com/) installed for this example. You may also use `yarn`, just adjust the `npm&npmx` commands accordingly. `java` must also be installed.
+<p align="center"><em>"Dissolving the illusory labyrinth of GPU programming. Inspired by the Sanskrit word for 'formless awareness', we take you to a higher state — where the intricacies of WebGPU are simplified into elegant Clojure abstractions. Whether you're crafting vertex shaders or pipelines, this library's DSL lets you focus on creativity. Ideas in, beauty out – GPU enlightenment."</em></p>
 
-```bash
-git clone https://github.com/shadow-cljs/quickstart-browser.git quickstart
-cd quickstart
-npm install
-npx shadow-cljs clj-repl
-```
+<p align="center">
+  <strong>⚠️ Early development — API is unstable, demos are works in progress, things will change.</strong>
+</p>
 
-The first startup takes a bit of time since it has to download all the dependencies and do some prep work. Once this is running we can get started.
+---
 
-```txt
-(shadow/watch :app)
-```
+## What is this?
 
-You do not have to do this at the REPL, you can also run `npx shadow-cljs watch app` in another terminal. The result will be the same.
+Nirvikalpa is a ClojureScript WebGPU library built on a simple conviction: **GPU programming should be data all the way down**.
 
-Either way you should see a message like this:
+Scenes, shapes, pipelines, transforms — everything is a plain Clojure map or vector. You can inspect any value at the REPL, serialize it, pass it through ordinary functions, compose it with `conj` and `assoc`. The GPU calls stay at the boundary. Everything leading up to them is just data.
 
-```txt
-[:app] Build completed. (23 files, 4 compiled, 0 warnings, 7.41s)
-```
+---
 
-When you do you can start using the integrated development server to open the page in the browser.
+## The Demo Gallery
 
-```txt
-open http://localhost:8020
-```
+Run it and you get a live gallery at **[http://localhost:8020](http://localhost:8020)**.
 
-The app is only a very basic skeleton with the most useful development tools configured.
+The sidebar has three categories: **WebGPU Samples** (triangles, rotating cubes, textured cube, instanced geometry), **2D Rendering** (31 SDF primitives — filled shapes, strokes, gradients, Bézier curves), and **High-Level API** (declarative shape composition examples). Click anything to render it on the canvas.
 
-`shadow-cljs` is configured by the `shadow-cljs.edn` config. It looks like this:
+---
+
+## Shapes as Data
+
+Every shape is a map. No methods, no class hierarchy — just keys and values:
 
 ```clojure
-{:source-paths
- ["src"] ;; .cljs files go here
+(require '[nirvikalpa.api.render-2d-api :as api])
 
- :dependencies
- [] ;; covered later
+;; A circle is a map
+(api/circle {:cx 0.5 :cy 0.5 :radius 0.3 :color :blue})
+;; => {:type :circle, :cx 0.5, :cy 0.5, :radius 0.3, :color [0.2 0.5 1.0 1.0]}
 
- :builds
- {:app {:target :browser
-        :output-dir "public/js"
-        :asset-path "/js"
+;; A rounded rectangle
+(api/rounded-rect {:x 0.2 :y 0.3 :w 0.4 :h 0.3 :radius 0.05 :color :red})
+;; => {:type :rounded-rect, :x 0.2, :y 0.3, :w 0.4, :h 0.3, :radius 0.05, :color [1 0 0 1]}
 
-        :modules
-        {:main ;; <- becomes public/js/main.js
-         {:entries [starter.browser]}}
+;; A star
+(api/star {:cx 0.5 :cy 0.5 :outer-radius 0.3 :inner-radius 0.12 :color :gold})
+;; => {:type :star, :cx 0.5, :cy 0.5, :outer-radius 0.3, :inner-radius 0.12, ...}
 
-        :devtools
-        ;; before live-reloading any code call this function
-        {:before-load starter.browser/stop
-         ;; after live-reloading finishes call this function
-         :after-load starter.browser/start
-         ;; serve the public directory over http at port 8020
-         :http-root "public"
-         :http-port 8020}
-        }}}
+;; A ring (donut)
+(api/ring {:cx 0.5 :cy 0.5 :radius 0.25 :thickness 0.08 :color :blue})
 ```
 
-It defines the `:app` build with the `:target` set to `:browser`. All output will be written to `public/js` which is a path relative to the project root (ie. the directory the `shadow-cljs.edn` config is in).
+Because shapes are maps, everything in Clojure's standard library applies — no special API needed:
 
-`:modules` defines the how the output should be bundled together. For now we just want one file. The `:main` module will be written to `public/js/main.js`, it will include the code from the `:entries` and all their dependencies.
+```clojure
+(def circle (api/circle {:cx 0.5 :cy 0.5 :radius 0.3 :color :blue}))
 
-`:devtools` configures some useful development things. The `http://localhost:8020` server we used earlier is controlled by the `:http-port` and serves the `:http-root` directory.
+;; Inspect it at the REPL
+circle
+;; => {:type :circle, :cx 0.5, :cy 0.5, :radius 0.3, :color [0.2 0.5 1.0 1.0]}
 
-`:before-load` and `:after-load` are useful callbacks that will be used by the devtools when live-reloading code. They are optional but they control the live-reload. If you do not need any callbacks just configure `:autoload true`.
+;; Resize it
+(update circle :radius * 2)
 
-The last part is the actual `index.html` that is loaded when you open `http://localhost:8020`. It loads the generated `/js/main.js` and then calls `start.browser.init` which we defined in the `src/start/browser.cljs`.
+;; Recolor it
+(assoc circle :color [1.0 0.4 0.0 1.0])
 
-```html
-<!doctype html>
-<html>
-<head><title>Browser Starter</title></head>
-<body>
-<h1>shadow-cljs - Browser</h1>
-<div id="app"></div>
-
-<script src="/js/main.js"></script>
-<script>starter.browser.init();</script>
-</body>
-</html>
+;; Serialize it — just a map, prints and reads back perfectly
+(pr-str circle)
 ```
 
-`init` is only called once and it calls `start` when done. During development the devtools will then call `stop` whenever it wants to reload some code. When its done doing that it will call `start` again but not `init`. You do not have to use this setup but it is what I recommend and it has worked well for me.
+---
 
-## Live reload
+## Composing Shapes
 
-To see the live reload in action you can edit the `src/start/browser.cljs`. Some output will be printed in the browser console.
+Shapes compose by putting them in a vector. `render!` draws them all in order, with proper alpha blending:
 
-## REPL
+```clojure
+;; A target: three concentric circles
+(api/render! canvas
+  [(api/circle {:cx 0.5 :cy 0.5 :radius 0.4 :color :red})
+   (api/circle {:cx 0.5 :cy 0.5 :radius 0.28 :color :white})
+   (api/circle {:cx 0.5 :cy 0.5 :radius 0.15 :color :red})])
 
-During development it the REPL is very useful. The `clj-repl` process we started by default is a Clojure REPL which can control the `shadow-cljs` tool itself. Every command can also be directly used from the command line, so you do not have to use the REPL.
+;; A scene defined as named data
+(def scene
+  {:sky      (api/rect {:x 0 :y 0 :w 1 :h 0.6 :color [0.4 0.6 1.0 1.0]})
+   :ground   (api/rect {:x 0 :y 0.6 :w 1 :h 0.4 :color [0.3 0.6 0.2 1.0]})
+   :sun      (api/circle {:cx 0.8 :cy 0.15 :radius 0.08 :color [1.0 0.95 0.4 1.0]})
+   :hill     (api/ellipse {:cx 0.3 :cy 0.62 :rx 0.25 :ry 0.12 :color [0.25 0.55 0.18 1.0]})})
 
-To switch to the ClojureScript REPL for our build do
+;; Render the whole scene — just a map, vals returns the shapes in order
+(api/render! canvas (vals scene))
 
-```
-[1:0]~shadow.user=> (shadow/repl :app)
-[1:1]~cljs.user=>
-```
-
-From the command line use `npx shadow-cljs cljs-repl app`.
-
-This can now be used to eval code in the browser (assuming you still have it open). Try `(js/alert "Hi.")` and take it from there.
-
-You can get back to the Clojure REPL by typing `:repl/quit`. You can switch back to the CLJS REPL at any point.
-
-## Release
-
-The `watch` process we started is all about development. It injects the code required for the REPL and the all other devtools but we do not want any of that when putting the code into "production" (ie. making it available publicly).
-
-The `release` action will remove all development code and run the code through the Closure Compiler to produce a minified `main.js` file. Since that will overwrite the file created by the `watch` we first need to stop that.
-
-```
-(shadow/stop-worker :app)
-(shadow/release :app)
+;; Move the sun by transforming the data
+(api/render! canvas
+  (vals (update-in scene [:sun :cx] - 0.1)))
 ```
 
-Or in the command line stop the `npx shadow-cljs watch` process by CTRL+C and then `npx shadow-cljs release app`.
+Groups let you transform a cluster of shapes together:
 
-When done you can open `http://localhost:8020` and see the `release` build in action. At this point you would usually copy the `public` directory to the "production" web server.
+```clojure
+;; A constellation: a star with orbiting rings, placed as a unit
+(api/render! canvas
+  [(api/rect {:x 0 :y 0 :w 1 :h 1 :color [0.05 0.05 0.1 1.0]})
+   (api/group
+     {:transform {:translate [0.5 0.5]}
+      :children  [(api/star {:cx 0 :cy 0 :outer-radius 0.12 :inner-radius 0.05 :color :gold})
+                  (api/ring {:cx 0 :cy 0 :radius 0.22 :thickness 0.02 :color [0.6 0.7 1.0 0.6]})
+                  (api/circle {:cx 0.25 :cy 0 :radius 0.04 :color [0.8 0.9 1.0 1.0]})]})])
+```
 
-Note that in the default config we overwrote the `public/js/main.js` created by the `watch`. You can also configure a different path to use for release builds but writing the output to the same file means we do not have to change the `index.html` and test everything as is.
+---
+
+## Full Shape Reference
+
+| Shape | Constructor |
+|-------|-------------|
+| Circle | `(api/circle {:cx :cy :radius :color})` |
+| Rectangle | `(api/rect {:x :y :w :h :color})` |
+| Rounded Rect | `(api/rounded-rect {:x :y :w :h :radius :color})` |
+| Ellipse | `(api/ellipse {:cx :cy :rx :ry :color})` |
+| Triangle | `(api/triangle {:p1 :p2 :p3 :color})` |
+| Line | `(api/line {:x1 :y1 :x2 :y2 :width :color})` |
+| Polygon | `(api/polygon {:cx :cy :radius :sides :color})` |
+| Star | `(api/star {:cx :cy :outer-radius :inner-radius :points :color})` |
+| Ring | `(api/ring {:cx :cy :radius :thickness :color})` |
+| Point | `(api/point {:x :y :size :color})` |
+| Group | `(api/group {:transform {:translate :rotate :scale} :children [...]})` |
+
+Coordinates are in UV space (0.0–1.0). Colors accept keyword shortcuts (`:red`, `:blue`, `:green`, `:white`, `:black`, `:gold`) or `[r g b a]` vectors.
+
+The lower-level 2D rendering layer (accessible in the gallery under **2D Rendering**) exposes further primitives: arcs, annular sectors, dashed and dotted lines, capsules, diamonds, quadrilaterals, X-crosses, Bézier curves (quadratic and cubic), and linear/radial/sweep gradients.
+
+---
+
+## Getting Started
+
+### Requirements
+
+- [node.js (v6+)](https://nodejs.org/en/download/)
+- [Java JDK (8+)](http://www.oracle.com/technetwork/java/javase/downloads/index.html) or [OpenJDK (8+)](https://jdk.java.net/)
+
+### Run
+
+```bash
+npm install
+npx shadow-cljs watch app
+```
+
+Open [http://localhost:8020](http://localhost:8020) once the build completes. The gallery loads immediately — no configuration needed.
+
+### REPL
+
+```bash
+npx shadow-cljs cljs-repl app
+```
+
+Evaluate ClojureScript directly in the running browser tab. This is the primary development loop: define a shape, render it, tweak a value, render again.
+

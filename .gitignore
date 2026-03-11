@@ -1,3 +1,14 @@
 /public/js
 /node_modules
 /target
+/.shadow-cljs
+/*.iml
+/.nrepl-port
+/.idea
+/out
+/logs
+/.claude
+/.playwright-mcp
+/electric-gpu
+/prompt.md
+/prompt2.md

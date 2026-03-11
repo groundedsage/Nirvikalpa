@@ -1,0 +1,26 @@
+{:paths ["src" "resources"]
+
+ :deps
+ {org.clojure/clojure {:mvn/version "1.12.0"}
+
+  ;; JWM for windowing
+  io.github.humbleui/jwm {:mvn/version "0.4.18"}
+  io.github.humbleui/types {:mvn/version "0.1.10"}
+
+  ;; WebGPU native bindings
+  com.phronemophobic/clj-webgpu {:git/url "https://github.com/phronmophobic/clj-webgpu"
+                                 :git/sha "daa0179c51c2689c3fabaef650afa1719416aa7d"}
+  ;; Platform-specific native libraries (choose one for your platform)
+  com.phronemophobic.cljonda/webgpu-native-darwin-aarch64 {:mvn/version "v0.19.4.1"}  ; macOS ARM
+  ;; com.phronemophobic.cljonda/webgpu-native-darwin-x86-64 {:mvn/version "v0.19.4.1"}   ; macOS Intel
+  ;; com.phronemophobic.cljonda/webgpu-native-linux-x86-64 {:mvn/version "v0.19.4.1"}    ; Linux
+
+  ;; Shader DSL (local reference to main project)
+  nirvikalpa/shader-dsl {:local/root ".."}}
+
+ :aliases
+ {:run {:main-opts ["-m" "nirvikalpa.native.triangle"]}
+
+  :repl {:extra-deps {nrepl/nrepl {:mvn/version "1.1.0"}
+                      cider/cider-nrepl {:mvn/version "0.42.1"}}
+         :main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}}}
